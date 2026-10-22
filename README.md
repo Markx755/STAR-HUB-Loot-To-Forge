@@ -1,65 +1,34 @@
-# STAR HUB — Loot To Forge Starter
+# STAR HUB — Loot To Forge (GameId 10684750879)
 
-This repository provides a safe-by-default Roblox Studio starter for the experience `Loot To Forge` (GameId `10684750879`).
+This repository starter is scoped to **one game only: Loot To Forge**.
 
-The project is intentionally limited to review-safe source handling and a minimal UI example. It does not silently execute remote scripts or load upstream source files automatically.
+## Files
 
-## Purpose
+- `src/main.client.lua` — original Studio UI shell with draggable window, Main/Modules/Settings tabs, minimize/close, module audit labels, and local stop-state button. Game automation is not connected.
+- `src/game_check.client.lua` — checks that the current experience's `game.GameId` matches `10684750879`; it does not load remote code.
+- `docs/Loot-To-Forge-source.lua` — byte-preserved copy of the original `All Map/Loot To Forge.lua` from the uploaded ZIP, included for source review only.
+- `docs/ui.lua.upstream-copy` and `docs/ui_v2.lua.upstream-copy` — byte-preserved UI library copies from the archive for review, not automatically executed.
+- `.github/compat_check.py` and `.github/workflows/luau-check.yml` — copied compatibility-check files from the archive when present.
+- `docs/SOURCE_AUDIT.md` — initial findings and caveats.
+- `docs/FUNCTION_INVENTORY.md` — static inventory of source function groups.
+- `docs/DEPENDENCY_AND_REMOTE_AUDIT.md` — external code-loading paths, executor-only APIs, and remote-call risks.
+- `docs/UI_CALLBACK_MAP.md` — UI tabs and representative callback flow.
+- `docs/NEXT_IMPLEMENTATION.md` — implementation gates and evidence boundary.
 
-Use this repository as a clean starting point when you want:
-- a minimal STAR HUB UI example,
-- a game-id guard for the correct experience,
-- preserved upstream source for review without auto-execution,
-- a safe onboarding pattern for authorized local development.
+## Important source/licensing notes
 
-## Repository layout
+The source archive's file listing did not include a LICENSE file. Public availability alone does not establish permission to republish or modify someone else's code. Before making this repository public, verify the upstream license/permission. If permission is unclear, remove the upstream copies under `docs/` and use only original code you own or have permission to use.
 
-- `src/main.client.lua` — minimal STAR HUB UI example.
-- `src/game_check.client.lua` — confirms the current game matches `10684750879` before proceeding.
-- `docs/Loot-To-Forge-source.lua` — preserved copy of the original script for review only.
-- `docs/ui.lua.upstream-copy` — upstream UI copy retained for audit/review.
-- `docs/ui_v2.lua.upstream-copy` — second upstream UI copy retained for audit/review.
-- `docs/SOURCE_AUDIT.md` — static source review notes and caveats.
-- `LICENSE-REVIEW-REQUIRED.md` — caution about redistributing original source without confirmed license permission.
-- `README.md` — project overview and usage notes.
+This starter deliberately does not include the original generic loader or auto-execution behavior, and does not claim that the original game automation has been preserved as a working feature set. The additional audit documents are static-review notes, not runtime validation. The original game script is kept as a byte-preserved review artifact so it can be audited before any permitted adaptation.
 
-## Safe usage rules
+## Upload to GitHub
 
-This starter deliberately does not:
-- download code from remote URLs,
-- run `loadstring` or similar dynamic execution,
-- auto-run preserved upstream files.
-
-The scripts are intended for use in a Roblox Studio experience you own or are explicitly authorized to modify.
-
-## Source review and licensing caution
-
-The source archive referenced in this repository did not include a LICENSE file. Public availability alone does not establish permission to redistribute or modify someone else's source.
-
-Before publishing or reusing upstream code, verify:
-1. you have the right to redistribute it,
-2. the original license allows modification or sharing,
-3. you are not violating the original author or game developer terms.
-
-See `LICENSE-REVIEW-REQUIRED.md` for the cautionary guidance.
-
-## Local setup
-
-1. Open the project in Roblox Studio.
-2. Place the scripts in an experience you own or are authorized to develop.
-3. Use `src/main.client.lua` as a starter UI reference.
-4. Use `src/game_check.client.lua` to ensure the experience matches the intended game.
-5. Keep all preserved upstream copies in `docs/` and review them before any production use.
+1. Download and extract this ZIP.
+2. Create a GitHub repository named `STAR-HUB-Loot-To-Forge`.
+3. Upload the contents of this folder (not the ZIP file nested inside).
+4. Review `LICENSE-REVIEW-REQUIRED.md` before public release.
+5. Open the project in Roblox Studio and test the new UI in an experience you own or are authorized to develop.
 
 ## Testing status
 
-This package is a static starter and source-review project.
-- No live Roblox runtime validation was performed here.
-- It is not an assertion that the original upstream code is safe or functional.
-
-## Recommended workflow
-
-- review source under `docs/` before building gameplay automation,
-- keep your production code separate from preserved upstream copies,
-- avoid automatic remote execution entirely,
-- keep the project limited to game ownership or explicit authorization.
+The package ZIP integrity was checked. No Roblox runtime test was performed; this does not prove the scripts run correctly in Roblox.
