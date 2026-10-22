@@ -40,6 +40,37 @@ local gui = make("ScreenGui", {
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 }, playerGui)
 
+local connections = {}
+local closed = false
+local dragInput, dragStart, startPosition, dragConnection
+
+local function stopDragging()
+    dragInput, dragStart, startPosition = nil, nil, nil
+    if dragConnection then
+        dragConnection:Disconnect()
+        dragConnection = nil
+    end
+end
+
+local function connect(signal, callback)
+    local connection = signal:Connect(function(...)
+        if not closed then callback(...) end
+    end)
+    table.insert(connections, connection)
+end
+
+local function cleanup()
+    if closed then return end
+    closed = true
+    stopDragging()
+    for _, connection in ipairs(connections) do
+        connection:Disconnect()
+    end
+    table.clear(connections)
+end
+
+table.insert(connections, gui.Destroying:Connect(cleanup))
+
 local window = make("Frame", {
     Name = "Window",
     Size = UDim2.fromOffset(680, 440),
@@ -61,18 +92,27 @@ make("Frame", {
     BackgroundColor3 = COLORS.panel, BorderSizePixel = 0,
 }, header)
 
+local dragHandle = make("Frame", {
+    Name = "DragHandle",
+    Size = UDim2.new(1, -88, 1, 0),
+    BackgroundTransparency = 1,
+    Active = true,
+}, header)
+
 make("TextLabel", {
     Name = "Brand", BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(18, 8), Size = UDim2.fromOffset(220, 25),
+    Position = UDim2.fromOffset(18, 8), Size = UDim2.new(1, -28, 0, 25),
     Font = Enum.Font.GothamBold, Text = "STAR HUB",
     TextColor3 = COLORS.text, TextSize = 21, TextXAlignment = Enum.TextXAlignment.Left,
-}, header)
+    TextTruncate = Enum.TextTruncate.AtEnd,
+}, dragHandle)
 make("TextLabel", {
     Name = "Subtitle", BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(19, 32), Size = UDim2.fromOffset(280, 17),
+    Position = UDim2.fromOffset(19, 32), Size = UDim2.new(1, -28, 0, 17),
     Font = Enum.Font.Gotham, Text = "LOOT TO FORGE  /  DEVELOPMENT BUILD",
     TextColor3 = COLORS.muted, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left,
-}, header)
+    TextTruncate = Enum.TextTruncate.AtEnd,
+}, dragHandle)
 
 local function headerButton(name, label, x, color)
     local button = make("TextButton", {
@@ -205,13 +245,13 @@ for index, name in ipairs({ "Main", "Modules", "Settings" }) do
         Text = name, TextColor3 = COLORS.text, TextSize = 13,
     }, sidebar)
     round(button, 8)
-    button.Activated:Connect(function() showPage(name) end)
+    connect(button.Activated, function() showPage(name) end)
     navButtons[name] = button
 end
 showPage("Main")
 
 local running = true
-stopButton.Activated:Connect(function()
+connect(stopButton.Activated, function()
     -- No game jobs are connected in this UI-only milestone.
     running = false
     statusText.Text = "Stopped · no background jobs are connected"
@@ -219,32 +259,58 @@ stopButton.Activated:Connect(function()
 end)
 
 local minimized = false
-minimize.Activated:Connect(function()
+connect(minimize.Activated, function()
+    stopDragging()
     minimized = not minimized
     sidebar.Visible = not minimized
     content.Visible = not minimized
     window.Size = minimized and UDim2.fromOffset(300, 58) or UDim2.fromOffset(680, 440)
 end)
-close.Activated:Connect(function() gui:Destroy() end)
+connect(close.Activated, function()
+    cleanup()
+    gui:Destroy()
+end)
 
--- Drag the window from its header. Input handling is local to this UI.
-local dragging, dragStart, startPosition
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPosition = window.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
+connect(dragHandle.InputBegan, function(input)
+    if dragInput then return end
+
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1
+        and input.UserInputType ~= Enum.UserInputType.Touch then
+        return
     end
+
+    dragInput = input
+    dragStart = input.Position
+    startPosition = window.Position
+
+    dragConnection = input.Changed:Connect(function()
+        if dragInput == input and (
+            input.UserInputState == Enum.UserInputState.End
+            or input.UserInputState == Enum.UserInputState.Cancel
+        ) then
+            stopDragging()
+        end
+    end)
 end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+
+connect(UserInputService.InputChanged, function(input)
+    if not dragInput then return end
+
+    local mouseMovement =
+        dragInput.UserInputType == Enum.UserInputType.MouseButton1
+        and input.UserInputType == Enum.UserInputType.MouseMovement
+
+    if input == dragInput or mouseMovement then
         local delta = input.Position - dragStart
-        window.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X,
-            startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
+        window.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
+        )
     end
 end)
+
+connect(UserInputService.WindowFocusReleased, stopDragging)
 
 print("[STAR HUB] UI shell loaded. Game modules are audit-only and are not connected.")
