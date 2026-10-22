@@ -1,3 +1,0 @@
--- DEPRECATED: This upstream copy is preserved in docs/ and is not used by the starter project.
--- Use docs/ui.lua.upstream-copy instead.
-return nil
