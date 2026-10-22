@@ -1,0 +1,12 @@
+.DS_Store
+*.rbxlx
+*.rbxl
+*.rbxm
+*.rbxmx
+*.rblx
+*.log
+*.tmp
+roblox-temp/
+studio-temp/
+__pycache__/
+*.pyc

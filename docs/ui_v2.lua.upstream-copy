@@ -1,0 +1,18 @@
+-- STAGING NOTE:
+-- This file is intentionally preserved as an upstream copy for source review.
+-- It is not auto-executed by the starter client script.
+-- Original upstream reference: ui_v2.lua.upstream-copy
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local GuiService = game:GetService("GuiService")
+local CoreGui = game:GetService("CoreGui")
+local Stats = game:GetService("Stats")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- Source review only; this copy is not meant to be auto-loaded in production.
