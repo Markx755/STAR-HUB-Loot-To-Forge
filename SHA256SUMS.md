@@ -1,0 +1,11 @@
+# SHA-256 manifest
+- `.github/compat_check.py` — `d8ac706c91978fe1b83f33526d795a672f4ebd5d79d9095ad7f42ffe1dc717d1`
+- `.github/workflows/luau-check.yml` — `2cfac490e0f551bc2f3f13ef8d5e59d2c736c6a14566c333fa94f53265d91d1e`
+- `LICENSE-REVIEW-REQUIRED.md` — `bc9c63272975e5f07208c2257265c425fbeabaf2b26ee1a6c8f6ebc6d91a9083`
+- `README.md` — `4320ff71e50a38b6ec9f546c27213aed5f5722e04ae8e7ef3818cdaa2c35e326`
+- `docs/Loot-To-Forge-source.lua` — `d5a3c8e7921a37c9e03971777dd8a2ea4ec0692f28eb9027a07fba43436606fe`
+- `docs/SOURCE_AUDIT.md` — `d2fd3fcf404dc6af4d6c9010e1544e8add1e38f7aa678e19c7d0acd353f390d9`
+- `docs/ui.lua.upstream-copy` — `a3daad7dd58542533920fad69795b6a74fa67a6f23171945f2b3d733f4b258a8`
+- `docs/ui_v2.lua.upstream-copy` — `332f71a11349bf04d5eeca07052db36a8b177e4ab85f321f9ee036aae76efd7b`
+- `src/game_check.client.lua` — `d96403145059c6a64097a62e3090459188186c866930a78da1bd2253053bd02c`
+- `src/main.client.lua` — `05eff7a5f7ebf3ad0e0d4ef45bc759397201d253bba1fa53f6cdc2a9f78d04a6`
