@@ -9,7 +9,7 @@ This report describes static inspection only.
 ## Verified facts
 - The archive includes a file named `All Map/Loot To Forge.lua`.
 - The Loader mapping supplied in the conversation maps GameId `10684750879` to `Loot To Forge`.
-- The source game script contains 5 URL-like string(s), 3 occurrence(s) of `loadstring`, 0 occurrence(s) of the word `webhook` (case-insensitive), and 272 text match(es) beginning with `Auto`.
+- The source game script contains 5 URL-like string(s), 3 occurrence(s) of `loadstring`, 0 occurrence(s) of the word `webhook` (case-insensitive), and 272 text match(es) beginning with `Auto` (a textual count, not a verified feature count).
 - This package preserves the original game script bytes at `docs/Loot-To-Forge-source.lua`; it does not silently rewrite it.
 - This package adds a new independent UI example at `src/main.client.lua`; it is not a replacement for all original automation functions.
 
