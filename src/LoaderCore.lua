@@ -13,6 +13,9 @@ function LoaderCore.new(registry, logger)
     assert(type(registry.get) == "function", "The registry must provide get")
 
     local activeModules = {}
+    local activeGenerations = {}
+    local startingModules = {}
+    local nextGeneration = 0
     local state = "stopped"
     local log = logger or defaultLogger
 
@@ -23,7 +26,13 @@ function LoaderCore.new(registry, logger)
     end
 
     local function updateState()
-        state = next(activeModules) and "running" or "stopped"
+        if next(activeModules) then
+            state = "running"
+        elseif next(startingModules) then
+            state = "starting"
+        else
+            state = "stopped"
+        end
     end
 
     local loader = {}
@@ -36,7 +45,7 @@ function LoaderCore.new(registry, logger)
     end
 
     function loader.startModule(name, options)
-        if activeModules[name] then
+        if activeModules[name] or startingModules[name] then
             return true, "already started"
         end
 
@@ -57,27 +66,52 @@ function LoaderCore.new(registry, logger)
             moduleOptions[key] = value
         end
 
+        nextGeneration = nextGeneration + 1
+        local generation = nextGeneration
+        local closedDuringStart = false
+        startingModules[name] = generation
+        updateState()
+
         local onClose = moduleOptions.onClose
         moduleOptions.onClose = function(...)
-            activeModules[name] = nil
-            updateState()
+            if activeGenerations[name] == generation then
+                activeModules[name] = nil
+                activeGenerations[name] = nil
+                updateState()
+            elseif startingModules[name] == generation then
+                closedDuringStart = true
+            end
             if onClose then
                 onClose(...)
             end
         end
 
         local ok, handle, startError = pcall(module.start, moduleOptions)
+        startingModules[name] = nil
         if not ok then
+            updateState()
             reportError("start", name, handle)
             return false, tostring(handle)
         end
         if type(handle) ~= "table" or type(handle.stop) ~= "function" then
+            updateState()
             local message = startError or "Module start must return a handle with stop"
             reportError("start", name, message)
             return false, tostring(message)
         end
 
+        if closedDuringStart then
+            local stopOk, stopError = pcall(handle.stop)
+            updateState()
+            if not stopOk then
+                reportError("stop", name, stopError)
+                return false, tostring(stopError)
+            end
+            return true, "closed during startup"
+        end
+
         activeModules[name] = handle
+        activeGenerations[name] = generation
         updateState()
         return true
     end
@@ -89,6 +123,7 @@ function LoaderCore.new(registry, logger)
         end
 
         activeModules[name] = nil
+        activeGenerations[name] = nil
         updateState()
         local ok, stopError = pcall(handle.stop)
         if not ok then

@@ -7,6 +7,8 @@ assert(not bundle:find("loadstring", 1, true), "bundle must not execute dynamic 
 assert(not bundle:find("http://", 1, true), "bundle must not contain external URLs")
 assert(not bundle:find("https://", 1, true), "bundle must not contain external URLs")
 assert(bundle:find("local Shell =", 1, true), "UI module must be included in the bundle")
+assert(bundle:find("local Layout =", 1, true), "responsive layout must be included in the bundle")
+assert(bundle:find("local ConnectionScope =", 1, true), "connection cleanup must be included in the bundle")
 assert(bundle:find("local ModuleRegistry =", 1, true), "registry must be included in the bundle")
 assert(bundle:find("local LoaderCore =", 1, true), "loader core must be included in the bundle")
 assert(bundle:find("duplicate initialization skipped", 1, true), "bundle must guard duplicate starts")

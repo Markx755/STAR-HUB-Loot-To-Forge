@@ -12,7 +12,10 @@ return function(dependencies)
     end
 
     local loader = dependencies.LoaderCore.new(registry)
-    local initialized, initializationError = loader.initialize()
+    local initialized, initializationError = loader.startModule(
+        "Shell",
+        dependencies.shellOptions
+    )
     if not initialized then
         error("STAR HUB initialization failed: " .. tostring(initializationError), 2)
     end

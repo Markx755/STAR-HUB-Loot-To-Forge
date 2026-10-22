@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "dist" / "star-hub.lua"
 MODULES = (
+    ("Layout", ROOT / "src" / "ui" / "Layout.lua"),
+    ("ConnectionScope", ROOT / "src" / "ui" / "ConnectionScope.lua"),
     ("Shell", ROOT / "src" / "ui" / "Shell.lua"),
     ("ModuleRegistry", ROOT / "src" / "ModuleRegistry.lua"),
     ("LoaderCore", ROOT / "src" / "LoaderCore.lua"),
@@ -36,6 +38,10 @@ def build_bundle() -> str:
             "return Loader({",
             "    LoaderCore = LoaderCore,",
             "    ModuleRegistry = ModuleRegistry,",
+            "    shellOptions = {",
+            "        Layout = Layout,",
+            "        ConnectionScope = ConnectionScope,",
+            "    },",
             "    modules = {",
             "        Shell = Shell,",
             "    },",

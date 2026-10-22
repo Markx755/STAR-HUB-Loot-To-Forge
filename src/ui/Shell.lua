@@ -8,10 +8,17 @@ local Shell = {}
 function Shell.start(options)
     options = options or {}
 
+    local Layout = assert(options.Layout, "Layout dependency is required")
+    local ConnectionScope = assert(options.ConnectionScope, "ConnectionScope dependency is required")
     local Players = game:GetService("Players")
     local UserInputService = game:GetService("UserInputService")
     local player = Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
+    local camera = workspace.CurrentCamera
+    if not camera then
+        return nil, "CurrentCamera is unavailable"
+    end
+    local initialLayout = Layout.compute(camera.ViewportSize, false)
 
     local COLORS = {
         bg = Color3.fromRGB(15, 18, 27),
@@ -47,44 +54,36 @@ function Shell.start(options)
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     }, playerGui)
 
-    local connections = {}
-    local closed = false
+    local connectionScope = ConnectionScope.new()
     local dragInput, dragStart, startPosition, dragConnection
 
     local function stopDragging()
         dragInput, dragStart, startPosition = nil, nil, nil
         if dragConnection then
-            dragConnection:Disconnect()
+            connectionScope.disconnect(dragConnection)
             dragConnection = nil
         end
     end
 
     local function connect(signal, callback)
-        local connection = signal:Connect(function(...)
-            if not closed then callback(...) end
-        end)
-        table.insert(connections, connection)
+        return connectionScope.connect(signal, callback)
     end
 
     local function cleanup()
-        if closed then return end
-        closed = true
+        if connectionScope.isClosed() then return end
         stopDragging()
-        for _, connection in ipairs(connections) do
-            connection:Disconnect()
-        end
-        table.clear(connections)
+        connectionScope.close()
         if options.onClose then
             options.onClose()
         end
     end
 
-    table.insert(connections, gui.Destroying:Connect(cleanup))
+    connect(gui.Destroying, cleanup)
 
     local window = make("Frame", {
         Name = "Window",
-        Size = UDim2.fromOffset(680, 440),
-        Position = UDim2.new(0.5, -340, 0.5, -220),
+        Size = UDim2.fromOffset(initialLayout.width, initialLayout.height),
+        Position = UDim2.fromOffset(initialLayout.x, initialLayout.y),
         BackgroundColor3 = COLORS.bg,
         BorderSizePixel = 0,
     }, gui)
@@ -144,11 +143,11 @@ function Shell.start(options)
         BorderSizePixel = 0,
     }, window)
     round(sidebar, 11)
-    make("UIPadding", {
+    local sidebarPadding = make("UIPadding", {
         PaddingTop = UDim.new(0, 12), PaddingLeft = UDim.new(0, 9),
         PaddingRight = UDim.new(0, 9),
     }, sidebar)
-    make("UIListLayout", {
+    local sidebarList = make("UIListLayout", {
         Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
     }, sidebar)
 
@@ -158,6 +157,7 @@ function Shell.start(options)
     }, window)
 
     local pages, navButtons = {}, {}
+    local navigationButtons = {}
     local function makePage(name)
         local page = make("ScrollingFrame", {
             Name = name, Size = UDim2.fromScale(1, 1),
@@ -257,6 +257,7 @@ function Shell.start(options)
         round(button, 8)
         connect(button.Activated, function() showPage(name) end)
         navButtons[name] = button
+        table.insert(navigationButtons, button)
     end
     showPage("Main")
 
@@ -269,12 +270,70 @@ function Shell.start(options)
     end)
 
     local minimized = false
+    local function applyLayout(center)
+        local layout = Layout.compute(camera.ViewportSize, minimized, center)
+        window.Size = UDim2.fromOffset(layout.width, layout.height)
+        window.Position = UDim2.fromOffset(layout.x, layout.y)
+
+        sidebarList.FillDirection = layout.compact and Enum.FillDirection.Horizontal
+            or Enum.FillDirection.Vertical
+        sidebarList.Padding = UDim.new(0, layout.compact and 4 or 8)
+        sidebarPadding.PaddingTop = UDim.new(0, layout.compact and 0 or 12)
+        sidebarPadding.PaddingLeft = UDim.new(0, layout.compact and 0 or 9)
+        sidebarPadding.PaddingRight = UDim.new(0, layout.compact and 0 or 9)
+
+        if layout.compact then
+            sidebar.Position = UDim2.fromOffset(12, 68)
+            sidebar.Size = UDim2.new(1, -24, 0, 38)
+            content.Position = UDim2.fromOffset(12, 116)
+            content.Size = UDim2.new(1, -24, 1, -128)
+        else
+            sidebar.Position = UDim2.fromOffset(12, 70)
+            sidebar.Size = UDim2.new(0, 150, 1, -82)
+            content.Position = UDim2.fromOffset(174, 70)
+            content.Size = UDim2.new(1, -186, 1, -82)
+        end
+
+        for _, button in ipairs(navigationButtons) do
+            button.Size = layout.compact
+                and UDim2.new(1 / 3, -4, 0, 38)
+                or UDim2.new(1, 0, 0, 38)
+        end
+    end
+
+    local function currentCenter()
+        return Vector2.new(
+            window.AbsolutePosition.X + window.AbsoluteSize.X / 2,
+            window.AbsolutePosition.Y + window.AbsoluteSize.Y / 2
+        )
+    end
+
+    applyLayout()
+    local viewportConnection = connect(camera:GetPropertyChangedSignal("ViewportSize"), function()
+        applyLayout(currentCenter())
+    end)
+    connect(workspace:GetPropertyChangedSignal("CurrentCamera"), function()
+        local nextCamera = workspace.CurrentCamera
+        if not nextCamera then
+            connectionScope.disconnect(viewportConnection)
+            viewportConnection = nil
+            return
+        end
+        connectionScope.disconnect(viewportConnection)
+        camera = nextCamera
+        applyLayout(currentCenter())
+        viewportConnection = connect(camera:GetPropertyChangedSignal("ViewportSize"), function()
+            applyLayout(currentCenter())
+        end)
+    end)
+
     connect(minimize.Activated, function()
         stopDragging()
+        local center = currentCenter()
         minimized = not minimized
         sidebar.Visible = not minimized
         content.Visible = not minimized
-        window.Size = minimized and UDim2.fromOffset(300, 58) or UDim2.fromOffset(680, 440)
+        applyLayout(center)
     end)
     connect(close.Activated, function()
         cleanup()
@@ -293,14 +352,14 @@ function Shell.start(options)
         dragStart = input.Position
         startPosition = window.Position
 
-        dragConnection = input.Changed:Connect(function()
+        dragConnection = connectionScope.track(input.Changed:Connect(function()
             if dragInput == input and (
                 input.UserInputState == Enum.UserInputState.End
                 or input.UserInputState == Enum.UserInputState.Cancel
             ) then
                 stopDragging()
             end
-        end)
+        end))
     end)
 
     connect(UserInputService.InputChanged, function(input)
